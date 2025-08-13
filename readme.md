@@ -1,46 +1,88 @@
-# Latex on docker
+# LaTeX on Docker
 
-```
-以下指令主要適用於Powershell
-```
-## 1. 建置
-```
+> 通用型 XeLaTeX / pdfLaTeX 編譯環境  
+> 支援中文與論文格式，自動判斷編譯引擎，適合跨平台開發與 CI 使用
+
+---
+
+## 專案連結
+
+- Docker Hub: [`liuming9124/latex-docker`](https://hub.docker.com/r/liuming9124/latex-docker)
+- GitHub: [`Liuming9124/latex-docker`](https://github.com/Liuming9124/latex-docker)
+
+---
+
+## 支援編譯引擎
+
+本映像支援以下 LaTeX 引擎：
+
+- `pdfLaTeX`：預設處理大多數含中文的論文格式（如 `CJKutf8` 或 `[pdftex]hyperref`）
+- `XeLaTeX`：適合自訂字體、直排與現代中文字排版（如使用 `xeCJK`, `fontspec`）
+
+若未指定 `TEX_ENGINE`，會自動依 `.tex` 檔內容進行判斷。
+
+---
+
+## 使用方式（PowerShell 指令）
+
+### 1. 建置 Docker Image（若使用本地 `dockerfile`）
+
+```powershell
 docker compose build
 ```
-- 根據 Dockerfile 建立名為 latex-docker:latest 的 image。
-- 使用 docker-compose.yml 中的 tex 服務。
 
-## 2. 強制重建（不使用快取）
-```
+### 2. 強制重建（不使用快取）
+
+```powershell
 docker compose build --no-cache
 ```
-- 若套件版本異動或 Image 異常時，建議用此方式重建，確保完全重新安裝。
 
-## 3. 執行
+---
 
-### 3.1 清除中間檔（aux, log, out...）
+## 編譯與清除指令
+
+### 使用已發佈的公開Image（建議）
+
+#### 清除中間檔（aux, log 等）
+
 ```powershell
-docker compose run --rm -v "${PWD}:/work" tex `
-  bash -lc "latexmk -C"
+docker run --rm -v "${PWD}:/work" liuming9124/latex-docker bash -lc "latexmk -C"
 ```
-- 相當於 latexmk -C，刪除中間產物，乾淨編譯用。
-- 適用於切換引擎或重編錯誤後清理狀態。
 
-### 3.2 編譯 計畫(XeLaTeX)
+#### 編譯 Proposal（自動判斷引擎，預設為 pdfLaTeX）
+
 ```powershell
-docker run --rm -e TEX_MAIN=proposal.tex -e TEX_ENGINE=xelatex -v "${PWD}:/work" latex-docker
+docker run --rm -e TEX_MAIN=proposal.tex -v "${PWD}:/work" liuming9124/latex-docker
 ```
-- 使用 docker run 單獨呼叫已建好之 latex-docker image。
-- 指定主檔為 proposal.tex，手動設引擎為 xelatex。
 
-### 3.3 編輯 Thesis
+#### 編譯 Thesis（強制使用 XeLaTeX）
+
 ```powershell
-$FILE="thesis.tex"
+docker run --rm -e TEX_MAIN=thesis.tex -e TEX_ENGINE=pdf -v "${PWD}:/work" liuming9124/latex-docker
+```
+
+---
+
+### 使用 docker compose（需本地有 `docker-compose.yml`）
+
+#### 清除中間檔
+
+```powershell
+docker compose run --rm -v "${PWD}:/work" tex bash -lc "latexmk -C"
+```
+
+#### 編譯 Thesis（固定 pdfLaTeX）
+
+```powershell
+$FILE = "thesis.tex"
 docker compose run --rm -v "${PWD}:/work" tex `
   bash -lc "latexmk -pdf -g -f -synctex=1 -halt-on-error -interaction=nonstopmode $FILE"
 ```
 
-## 建議的資料結構
+---
+
+## 建議的專案結構
+
 ```plaintext
 ├── docker-compose.yml
 ├── Dockerfile
@@ -51,3 +93,14 @@ docker compose run --rm -v "${PWD}:/work" tex `
 └── figures/
     └── ...
 ```
+
+---
+
+## 特點與支援
+
+* 自動判斷 pdfLaTeX 或 XeLaTeX（也可手動指定）
+* 預裝中文字型（Noto 思源、Arphic 中華電信）
+* latexmk 編譯與快取清除流程已整合
+* 適合跨平台編譯與 CI/CD 自動化部署
+
+---
