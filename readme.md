@@ -55,7 +55,7 @@ docker run --rm -v "${PWD}:/work" liuming9124/latex-docker bash -lc "latexmk -C"
 docker run --rm -e TEX_MAIN=proposal.tex -v "${PWD}:/work" liuming9124/latex-docker
 ```
 
-#### 編譯 Thesis（強制使用 XeLaTeX）
+#### 編譯 Thesis（預設為 pdfLaTeX）
 
 ```powershell
 docker run --rm -e TEX_MAIN=thesis.tex -e TEX_ENGINE=pdf -v "${PWD}:/work" liuming9124/latex-docker
