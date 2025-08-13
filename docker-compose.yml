@@ -3,4 +3,10 @@ services:
     image: latex-docker:latest
     build: .
     working_dir: /work
-    # 不在這裡固定 volumes / command；執行時用 -v 與命令列指定
+    volumes:
+      - ./:/work
+    environment:
+      TEX_MAIN: "*.tex"
+      TEX_ENGINE: "auto"
+      TEX_WATCH: "0"
+    command: ["bash", "-lc", "texbuild"]

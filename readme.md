@@ -1,7 +1,8 @@
 # LaTeX on Docker
 
 > 通用型 XeLaTeX / pdfLaTeX 編譯環境  
-> 支援中文與論文格式，自動判斷編譯引擎，適合跨平台開發與 CI 使用
+> 自動偵測引擎、自動追蹤子檔案，支援中文與學術論文格式  
+> 適合跨平台開發與 CI 使用
 
 ---
 
@@ -12,95 +13,104 @@
 
 ---
 
-## 支援編譯引擎
+## 功能與特色
 
-本映像支援以下 LaTeX 引擎：
+自動偵測：
+- 引擎：`pdfLaTeX` 或 `XeLaTeX`
+- 相依檔案（`\input{}`、圖片、bib）異動會自動觸發重新編譯
 
-- `pdfLaTeX`：預設處理大多數含中文的論文格式（如 `CJKutf8` 或 `[pdftex]hyperref`）
-- `XeLaTeX`：適合自訂字體、直排與現代中文字排版（如使用 `xeCJK`, `fontspec`）
+- 初次編譯自動使用 `latexmk -gg` 建立依賴快取
 
-若未指定 `TEX_ENGINE`，會自動依 `.tex` 檔內容進行判斷。
+- 預設啟用：
+  - 集中輸出至 `build/`（含中介檔、PDF）
+  -   預裝常見中文字型（思源宋黑、標楷體）
+
+- 支援 watch 模式（預設啟用）
 
 ---
 
-## 使用方式（PowerShell 指令）
+## 專案結構建議
 
-### 1. 建置 Docker Image（若使用本地 `dockerfile`）
+```plaintext
+.
+├── docker-compose.yml
+├── Dockerfile
+├── proposal.tex
+├── sec-cm03.tex
+├── proposal.bib
+├── figures/
+│   └── ...
+````
+
+---
+
+## 快速使用
+
+### 建置（使用本地 `Dockerfile`）
 
 ```powershell
 docker compose build
-```
-
-### 2. 強制重建（不使用快取）
-
-```powershell
+# 或強制不使用快取
 docker compose build --no-cache
 ```
 
 ---
 
-## 編譯與清除指令
+### 使用已發佈的映像
 
-### 使用已發佈的公開Image（建議）
+#### 一次編譯並自動選擇引擎
 
-#### 清除中間檔（aux, log 等）
+```powershell
+docker run --rm -v "${PWD}:/work" -e TEX_MAIN="proposal.tex" liuming9124/latex-docker
+```
+
+#### 清除中介檔案（build/、aux、log）
 
 ```powershell
 docker run --rm -v "${PWD}:/work" liuming9124/latex-docker bash -lc "latexmk -C"
 ```
 
-#### 編譯 Proposal（自動判斷引擎，預設為 pdfLaTeX）
+---
+
+### 使用 docker compose（需有 `docker-compose.yml`）
+
+#### 自動 watch 編譯（建議方式）
 
 ```powershell
-docker run --rm -e TEX_MAIN=proposal.tex -v "${PWD}:/work" liuming9124/latex-docker
+docker compose run --rm tex
 ```
 
-#### 編譯 Thesis（預設為 pdfLaTeX）
+#### 清除中介檔
 
 ```powershell
-docker run --rm -e TEX_MAIN=thesis.tex -e TEX_ENGINE=pdf -v "${PWD}:/work" liuming9124/latex-docker
+docker compose run --rm tex bash -lc "latexmk -C"
 ```
 
 ---
 
-### 使用 docker compose（需本地有 `docker-compose.yml`）
+## Watch 編譯行為說明
 
-#### 清除中間檔
-
-```powershell
-docker compose run --rm -v "${PWD}:/work" tex bash -lc "latexmk -C"
-```
-
-#### 編譯 Thesis（固定 pdfLaTeX）
-
-```powershell
-$FILE = "thesis.tex"
-docker compose run --rm -v "${PWD}:/work" tex `
-  bash -lc "latexmk -pdf -g -f -synctex=1 -halt-on-error -interaction=nonstopmode $FILE"
-```
+| 狀況        | 動作              |
+| --------- | --------------- |
+| 第一次編譯     | 自動啟用 `-gg` 建立依賴 |
+| 修改子檔案     | 自動重新編譯          |
+| 修改圖、bib 等 | 自動偵測異動重新編譯      |
+| 不需重新建構依賴  | 不會執行 `-gg`，節省時間 |
 
 ---
 
-## 建議的專案結構
+## 自訂參數（可於 docker-compose.yml 或 CLI 設定）
 
-```plaintext
-├── docker-compose.yml
-├── Dockerfile
-├── proposal.tex
-├── thesis.tex
-├── settings/
-│   └── thesis.sty
-└── figures/
-    └── ...
-```
+| 環境變數         | 說明                             | 預設值     |
+| ------------ | ------------------------------ | ------- |
+| `TEX_MAIN`   | 主 `.tex` 檔案名稱（支援 `*.tex`）      | `*.tex` |
+| `TEX_ENGINE` | 編譯引擎（`auto`, `pdf`, `xelatex`） | `auto`  |
+| `TEX_WATCH`  | 是否啟用 watch 模式（1=開, 0=關）        | `1`     |
 
 ---
 
-## 特點與支援
+## 推薦用途
 
-* 自動判斷 pdfLaTeX 或 XeLaTeX（也可手動指定）
-* 預裝中文字型（Noto 思源、Arphic 中華電信）
-* latexmk 編譯與快取清除流程已整合
-* 適合跨平台編譯與 CI/CD 自動化部署
-
----
+* 學位論文編寫（含圖片與子檔）
+* NSC/TW研究計畫書撰寫
+* 雲端 LaTeX 編譯與持續整合 CI
