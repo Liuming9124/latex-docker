@@ -85,7 +85,7 @@ docker run --rm `
 ```
 
 
-#### 3. 清除中間檔案（build/、aux、log）
+### 3. 清除中間檔案（build/、aux、log）
 
 ```powershell
 docker run --rm -v "${PWD}:/work" liuming9124/latex-docker bash -lc "latexmk -C"
