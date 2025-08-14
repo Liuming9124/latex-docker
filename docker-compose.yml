@@ -5,8 +5,13 @@ services:
     working_dir: /work
     volumes:
       - ./:/work
+      # 若需要額外字型，可自行 mount
+      # - "C:/Windows/Fonts/consola.ttf:/usr/share/fonts/truetype/consolas/consola.ttf:ro"
+      # - "C:/Windows/Fonts/consolab.ttf:/usr/share/fonts/truetype/consolas/consolab.ttf:ro"
+      # - "C:/Windows/Fonts/consolai.ttf:/usr/share/fonts/truetype/consolas/consolai.ttf:ro"
+      # - "C:/Windows/Fonts/consolaz.ttf:/usr/share/fonts/truetype/consolas/consolaz.ttf:ro"
     environment:
-      TEX_MAIN: "*.tex"
-      TEX_ENGINE: "auto"
-      TEX_WATCH: "0"
+      TEX_MAIN: "*.tex"   # 支援萬用字元，會取第一個匹配檔案
+      TEX_ENGINE: "auto"  # auto|pdf|xe|lua
+      TEX_WATCH: "1"      # 1 開啟 -pvc 監看
     command: ["bash", "-lc", "texbuild"]

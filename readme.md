@@ -15,38 +15,34 @@
 
 ## 功能與特色
 
-自動偵測：
-- 引擎：`pdfLaTeX` 或 `XeLaTeX`
-- 相依檔案（`\input{}`、圖片、bib）異動會自動觸發重新編譯
 
-- 初次編譯自動使用 `latexmk -gg` 建立依賴快取
+* **自動偵測引擎**：`pdfLaTeX` 或 `XeLaTeX`（根據專案內容判斷）
+* **相依檔案追蹤**：`\input{}`、圖片、`.bib` 變更會觸發重新編譯
+* **初次編譯自動加 `-gg`**（建立依賴快取）
+* **集中輸出**：中介檔與 PDF 會放在 `build/` 資料夾
+* **預裝常用中文字型**：思源宋黑、標楷體（自動嘗試替換缺字問題）
+* **可選 watch 模式**（`TEX_WATCH=1` 啟用，預設開啟，可即時監看檔案變更，自動重新編譯）
 
-- 預設啟用：
-  - 集中輸出至 `build/`（含中介檔、PDF）
-  -   預裝常見中文字型（思源宋黑、標楷體）
-
-- 支援 watch 模式（預設啟用）
 
 ---
 
 ## 專案結構建議
 
 ```plaintext
-.
 ├── docker-compose.yml
 ├── Dockerfile
 ├── proposal.tex
-├── sec-cm03.tex
+├── sec-01-intro.tex
 ├── proposal.bib
 ├── figures/
-│   └── ...
+│   └── fig1.png
 ````
 
 ---
 
 ## 快速使用
 
-### 建置（使用本地 `Dockerfile`）
+### 1. 使用本地 `Dockerfile` 建置
 
 ```powershell
 docker compose build
@@ -56,15 +52,38 @@ docker compose build --no-cache
 
 ---
 
-### 使用已發佈的映像
-
-#### 一次編譯並自動選擇引擎
+### 2. 使用已發佈映像（預設 watch 編譯）
 
 ```powershell
-docker run --rm -v "${PWD}:/work" -e TEX_MAIN="proposal.tex" liuming9124/latex-docker
+docker run --rm `
+    -v "${PWD}:/work" `
+    -e TEX_MAIN="proposal.tex" `
+    liuming9124/latex-docker
 ```
 
-#### 清除中介檔案（build/、aux、log）
+### 2.1 加入windows字型
+```powershell
+docker run --rm `
+   -v "${PWD}:/work" `
+   -v "C:/Windows/Fonts/consola.ttf:/usr/share/fonts/truetype/consolas/consola.ttf:ro" `
+   -v "C:/Windows/Fonts/consolab.ttf:/usr/share/fonts/truetype/consolas/consolab.ttf:ro" `
+   -v "C:/Windows/Fonts/consolai.ttf:/usr/share/fonts/truetype/consolas/consolai.ttf:ro" `
+   -v "C:/Windows/Fonts/consolaz.ttf:/usr/share/fonts/truetype/consolas/consolaz.ttf:ro" `
+   -e TEX_MAIN=proposal.tex `
+   -e TEX_ENGINE=xe `
+   latex-docker
+```
+
+### 2.2 單次編譯(關閉Watch)
+```powershell
+docker run --rm `
+  -v "$PWD:/work" `
+  -e TEX_MAIN="proposal.tex" `
+  -e TEX_WATCH=0 `
+  liuming9124/latex-docker
+```
+
+#### 3. 清除中間檔案（build/、aux、log）
 
 ```powershell
 docker run --rm -v "${PWD}:/work" liuming9124/latex-docker bash -lc "latexmk -C"
@@ -72,20 +91,31 @@ docker run --rm -v "${PWD}:/work" liuming9124/latex-docker bash -lc "latexmk -C"
 
 ---
 
-### 使用 docker compose（需有 `docker-compose.yml`）
+## 使用 docker-compose
 
-#### 自動 watch 編譯（建議方式）
+`docker-compose.yml` 範例：
 
-```powershell
+```yaml
+services:
+  tex:
+    image: liuming9124/latex-docker
+    volumes:
+      - .:/work
+    environment:
+      TEX_MAIN: "*.tex"
+      TEX_ENGINE: auto
+      TEX_WATCH: 1   # 預設已開啟
+```
+
+執行：
+
+```sh
+# 預設為 watch 模式
 docker compose run --rm tex
+
+# 單次編譯
+docker compose run --rm tex bash -lc "TEX_WATCH=0 latexmk"
 ```
-
-#### 清除中介檔
-
-```powershell
-docker compose run --rm tex bash -lc "latexmk -C"
-```
-
 ---
 
 ## Watch 編譯行為說明
@@ -99,18 +129,21 @@ docker compose run --rm tex bash -lc "latexmk -C"
 
 ---
 
-## 自訂參數（可於 docker-compose.yml 或 CLI 設定）
 
-| 環境變數         | 說明                             | 預設值     |
-| ------------ | ------------------------------ | ------- |
-| `TEX_MAIN`   | 主 `.tex` 檔案名稱（支援 `*.tex`）      | `*.tex` |
-| `TEX_ENGINE` | 編譯引擎（`auto`, `pdf`, `xelatex`） | `auto`  |
-| `TEX_WATCH`  | 是否啟用 watch 模式（1=開, 0=關）        | `1`     |
+## 環境變數
+
+| 變數名稱         | 說明                           | 預設值     |
+| ------------ | ---------------------------- | ------- |
+| `TEX_MAIN`   | 主 `.tex` 檔名（支援萬用字元）          | `*.tex` |
+| `TEX_ENGINE` | 編譯引擎：`auto`、`pdf`、`xe`、`lua` | `auto`  |
+| `TEX_WATCH`  | 1=持續監看模式，0=單次編譯              | `1`     |
 
 ---
 
 ## 推薦用途
 
-* 學位論文編寫（含圖片與子檔）
-* NSC/TW研究計畫書撰寫
-* 雲端 LaTeX 編譯與持續整合 CI
+* 學位論文與學術文章撰寫
+* 研究計畫書編譯
+* 雲端 LaTeX 編譯與 CI/CD 流程整合
+
+---
