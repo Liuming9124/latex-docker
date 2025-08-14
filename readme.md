@@ -21,7 +21,7 @@
 * **初次編譯自動加 `-gg`**（建立依賴快取）
 * **集中輸出**：中介檔與 PDF 會放在 `build/` 資料夾
 * **預裝常用中文字型**：思源宋黑、標楷體（自動嘗試替換缺字問題）
-* **可選 watch 模式**（`TEX_WATCH=1` 啟用，預設開啟，可即時監看檔案變更，自動重新編譯）
+* **可選 watch 模式**（`TEX_WATCH=1` 啟用，預設關閉，可即時監看檔案變更，自動重新編譯）
 
 
 ---
@@ -52,7 +52,7 @@ docker compose build --no-cache
 
 ---
 
-### 2. 使用已發佈映像（預設 watch 編譯）
+### 2. 使用已發佈映像（預設單次編譯）
 
 ```powershell
 docker run --rm `
@@ -61,7 +61,16 @@ docker run --rm `
     liuming9124/latex-docker
 ```
 
-### 2.1 加入windows字型
+### 2.1 Watch編譯
+```powershell
+docker run --rm `
+  -v "$PWD:/work" `
+  -e TEX_MAIN="proposal.tex" `
+  -e TEX_WATCH=1 `
+  liuming9124/latex-docker
+```
+
+### 2.2 加入windows字型 (Watch 編譯)
 ```powershell
 docker run --rm `
    -v "${PWD}:/work" `
@@ -71,17 +80,10 @@ docker run --rm `
    -v "C:/Windows/Fonts/consolaz.ttf:/usr/share/fonts/truetype/consolas/consolaz.ttf:ro" `
    -e TEX_MAIN=proposal.tex `
    -e TEX_ENGINE=xe `
+   -e TEX_WATCH=1 `
    latex-docker
 ```
 
-### 2.2 單次編譯(關閉Watch)
-```powershell
-docker run --rm `
-  -v "$PWD:/work" `
-  -e TEX_MAIN="proposal.tex" `
-  -e TEX_WATCH=0 `
-  liuming9124/latex-docker
-```
 
 #### 3. 清除中間檔案（build/、aux、log）
 
@@ -104,17 +106,17 @@ services:
     environment:
       TEX_MAIN: "*.tex"
       TEX_ENGINE: auto
-      TEX_WATCH: 1   # 預設已開啟
+      TEX_WATCH: 0
 ```
 
 執行：
 
 ```sh
-# 預設為 watch 模式
+# 預設為單次編譯模式
 docker compose run --rm tex
 
-# 單次編譯
-docker compose run --rm tex bash -lc "TEX_WATCH=0 latexmk"
+# Watch編譯
+docker compose run --rm tex bash -lc "TEX_WATCH=1 latexmk"
 ```
 ---
 

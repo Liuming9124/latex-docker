@@ -26,7 +26,7 @@ RUN set -eux; \
     echo "Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg" >> /etc/apt/sources.list.d/debian.sources; \
   fi
 
-# 2) 安裝 TeX Live + 字型（保留新版套件，並補齊舊版 arphic 套件）
+# 2) 安裝 TeX Live + 字型
 RUN set -eux; \
   apt-get update; \
   apt-get install -y --no-install-recommends \
@@ -75,7 +75,7 @@ RUN mkdir -p /usr/local/texlive/texmf-local/tex/latex/ctex/fontset && \
       > /usr/local/texlive/texmf-local/tex/latex/ctex/fontset/ctex-fontset-default.def && \
     mktexlsr && fc-cache -f
 
-# 6) 全域 latexmkrc（來自舊版功能：集中輸出 build、recorder、bib 自動）
+# 6) 全域 latexmkrc（集中輸出 build、recorder、bib 自動）
 RUN <<'RC'
 cat > /etc/latexmkrc <<'EOF'
 $pdf_mode = 1;          # 預設 PDF
@@ -91,7 +91,7 @@ $lualatex = "lualatex -interaction=nonstopmode -file-line-error -recorder %O %S"
 EOF
 RC
 
-# 7) texbuild 腳本（合併新版+舊版邏輯）
+# 7) texbuild 腳本
 #    - 支援 TEX_MAIN 萬用字元（取第一個匹配）
 #    - 自動判斷引擎（優先 ctex→xe；有 CJKutf8 或 [pdftex]hyperref→pdf；否則 xe）
 #    - 第一次編譯自動加 -gg
@@ -103,7 +103,7 @@ RUN bash -lc 'printf "%s\n" \
 "" \
 ": \"\${TEX_MAIN:=*.tex}\"" \
 ": \"\${TEX_ENGINE:=auto}\"" \
-": \"\${TEX_WATCH:=1}\"" \
+": \"\${TEX_WATCH:=0}\"" \
 "" \
 "# 展開萬用字元，取第一個檔案作為 main" \
 "files=( \$TEX_MAIN )" \
