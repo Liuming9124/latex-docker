@@ -138,7 +138,7 @@ docker compose run --rm tex bash -lc "TEX_WATCH=1 latexmk"
 | ------------ | ---------------------------- | ------- |
 | `TEX_MAIN`   | 主 `.tex` 檔名（支援萬用字元）          | `*.tex` |
 | `TEX_ENGINE` | 編譯引擎：`auto`、`pdf`、`xe`、`lua` | `auto`  |
-| `TEX_WATCH`  | 1=持續監看模式，0=單次編譯              | `1`     |
+| `TEX_WATCH`  | 1=持續監看模式，0=單次編譯              | `0`     |
 
 ---
 
